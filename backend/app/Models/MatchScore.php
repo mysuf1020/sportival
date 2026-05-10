@@ -8,8 +8,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class MatchScore extends Model
 {
     protected $fillable = [
-        'match_id', 'judge_id', 'registration_id',
-        'round_number', 'score', 'penalties', 'score_data',
+        'match_id',
+        'judge_id',
+        'registration_id',
+        'round_number',
+        'score',
+        'penalties',
+        'score_data',
     ];
 
     protected function casts(): array
@@ -23,7 +28,7 @@ class MatchScore extends Model
 
     public function match(): BelongsTo
     {
-        return $this->belongsTo(Match::class);
+        return $this->belongsTo(SportsMatch::class);
     }
 
     public function judge(): BelongsTo
