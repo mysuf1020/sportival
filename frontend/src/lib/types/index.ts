@@ -36,6 +36,8 @@ export interface Event {
   created_at: string
 }
 
+export type ScoringType = 'points' | 'time_asc' | 'rounds_won'
+
 export interface Category {
   id: number
   event_id: number
@@ -47,10 +49,20 @@ export interface Category {
   weight_min: number | null
   weight_max: number | null
   competition_type: CompetitionType
+  scoring_type: ScoringType
   sport_discipline: string | null
   max_participants: number | null
   is_active: boolean
   registrations_count?: number
+}
+
+export interface EventStats {
+  total_registrations: number
+  by_status: { pending: number; verified: number; rejected: number; disqualified: number }
+  by_category: Array<{ id: number; name: string; gender: Gender; total: number; verified: number; pending: number }>
+  by_gender: { male: number; female: number; mixed: number }
+  total_matches: number
+  match_progress: { pending: number; ongoing: number; finished: number }
 }
 
 export interface Contingent {

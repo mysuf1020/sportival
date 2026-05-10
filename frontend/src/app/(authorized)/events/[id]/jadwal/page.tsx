@@ -3,7 +3,7 @@
 import { use, useState } from 'react'
 import Link from 'next/link'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getEventSchedule, updateMatchSchedule, downloadExport } from '@/lib/apis/event'
+import { getEventSchedule, updateMatchSchedule, downloadExport, sendScheduleNotification } from '@/lib/apis/event'
 import type { Match } from '@/lib/types'
 
 const STATUS_COLOR: Record<string, string> = {
@@ -22,6 +22,13 @@ export default function AdminJadwalPage({ params }: { params: Promise<{ id: stri
   const [editingId, setEditingId] = useState<number | null>(null)
   const [form, setForm] = useState({ court: '', scheduled_at: '' })
   const [downloading, setDownloading] = useState<string | null>(null)
+  const [notifResult, setNotifResult] = useState<string | null>(null)
+
+  const notifyMutation = useMutation({
+    mutationFn: () => sendScheduleNotification(eventId),
+    onSuccess: (res) => setNotifResult(res.data.message ?? 'Notifikasi terkirim'),
+    onError: () => setNotifResult('Gagal mengirim notifikasi'),
+  })
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-schedule', eventId],
@@ -94,8 +101,21 @@ export default function AdminJadwalPage({ params }: { params: Promise<{ id: stri
           >
             {downloading === 'medals' ? 'Mengunduh...' : 'PDF Medali'}
           </button>
+          <button
+            onClick={() => { setNotifResult(null); notifyMutation.mutate() }}
+            disabled={notifyMutation.isPending}
+            className="rounded-lg border border-green-600 px-3 py-1.5 text-sm font-medium text-green-600 hover:bg-green-50 disabled:opacity-60"
+          >
+            {notifyMutation.isPending ? 'Mengirim...' : 'Kirim Notif WA'}
+          </button>
         </div>
       </div>
+
+      {notifResult && (
+        <div className={`rounded-lg px-4 py-2.5 text-sm ${notifResult.startsWith('Gagal') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
+          {notifResult}
+        </div>
+      )}
 
       <p className="text-sm text-gray-500">
         Atur jadwal waktu dan ring/court untuk setiap pertandingan. Klik <strong>Edit</strong> pada baris yang ingin diubah.

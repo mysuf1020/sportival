@@ -1,5 +1,5 @@
 import httpClient from '@/lib/http-request'
-import type { ApiResponse, Bracket, Category, Event, Match, MedalStanding, Registration } from '@/lib/types'
+import type { ApiResponse, Bracket, Category, Event, EventStats, Match, MedalStanding, Registration } from '@/lib/types'
 
 export const getEvents = () =>
   httpClient.get<ApiResponse<Event[]>>('/events')
@@ -37,6 +37,12 @@ export const generateBracket = (categoryId: number) =>
 
 export const updateMatchSchedule = (matchId: number, data: { court?: string; scheduled_at?: string | null }) =>
   httpClient.patch<ApiResponse<Match>>(`/admin/matches/${matchId}/schedule`, data)
+
+export const getEventStats = (eventId: number) =>
+  httpClient.get<ApiResponse<EventStats>>(`/admin/events/${eventId}/stats`)
+
+export const sendScheduleNotification = (eventId: number) =>
+  httpClient.post<ApiResponse<{ sent: number; failed: number; skipped: number }>>(`/admin/events/${eventId}/notify/schedule`)
 
 export const createEvent = (data: unknown) =>
   httpClient.post<ApiResponse<Event>>('/admin/events', data)

@@ -5,9 +5,11 @@ use App\Http\Controllers\Api\BracketController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\EventController;
 use App\Http\Controllers\Api\ExportController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\RegistrationController;
 use App\Http\Controllers\Api\ScheduleController;
 use App\Http\Controllers\Api\ScoringController;
+use App\Http\Controllers\Api\StatsController;
 use App\Http\Controllers\Api\UserController;
 use App\Models\MedalStanding;
 use Illuminate\Http\Request;
@@ -72,6 +74,16 @@ Route::prefix('v1')->group(function () {
         Route::middleware('role:super_admin,admin,ketua_juri,juri')->group(function () {
             Route::get('/matches/{matchId}/scores', [ScoringController::class, 'getMatchScores']);
             Route::post('/matches/{matchId}/scores', [ScoringController::class, 'submitScore']);
+        });
+
+        // Statistics
+        Route::middleware('role:super_admin,admin,sekretariat,bendahara,ketua_juri')->group(function () {
+            Route::get('/events/{eventId}/stats', [StatsController::class, 'eventStats']);
+        });
+
+        // Notifications
+        Route::middleware('role:super_admin,admin,sekretariat')->group(function () {
+            Route::post('/events/{eventId}/notify/schedule', [NotificationController::class, 'sendScheduleNotification']);
         });
 
         // Export (PDF downloads)

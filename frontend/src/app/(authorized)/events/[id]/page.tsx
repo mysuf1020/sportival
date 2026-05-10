@@ -49,7 +49,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
         ))}
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <Link href={`/events/${id}/peserta`} className="rounded-xl border bg-white p-5 hover:shadow-md transition-shadow">
           <div className="text-2xl">👥</div>
           <p className="mt-2 font-semibold text-gray-900">Manajemen Peserta</p>
@@ -69,6 +69,11 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
           <div className="text-2xl">⚖️</div>
           <p className="mt-2 font-semibold text-gray-900">Penjurian</p>
           <p className="text-sm text-gray-500">Input nilai pertandingan</p>
+        </Link>
+        <Link href={`/events/${id}/statistik`} className="rounded-xl border bg-white p-5 hover:shadow-md transition-shadow">
+          <div className="text-2xl">📊</div>
+          <p className="mt-2 font-semibold text-gray-900">Statistik</p>
+          <p className="text-sm text-gray-500">Rekap & progress event</p>
         </Link>
       </div>
 
