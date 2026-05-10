@@ -55,6 +55,10 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
           </Link>
           {(isOngoing || event.status === 'finished') && (
             <>
+              <Link href={`/e/${slug}/jadwal`} className="rounded-xl bg-indigo-600 p-5 text-center text-white hover:bg-indigo-700">
+                <div className="text-3xl">📅</div>
+                <div className="mt-2 font-semibold">Jadwal</div>
+              </Link>
               <Link href={`/e/${slug}/bagan`} className="rounded-xl bg-purple-600 p-5 text-center text-white hover:bg-purple-700">
                 <div className="text-3xl">🏅</div>
                 <div className="mt-2 font-semibold">Bagan</div>

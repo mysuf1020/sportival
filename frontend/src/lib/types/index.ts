@@ -107,6 +107,7 @@ export interface Match {
   athlete1?: Registration
   athlete2?: Registration
   winner?: Registration
+  category?: Pick<Category, 'id' | 'name' | 'event_id'>
 }
 
 export interface Bracket {

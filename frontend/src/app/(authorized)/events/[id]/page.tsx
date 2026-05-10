@@ -49,11 +49,16 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
         ))}
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Link href={`/events/${id}/peserta`} className="rounded-xl border bg-white p-5 hover:shadow-md transition-shadow">
           <div className="text-2xl">👥</div>
           <p className="mt-2 font-semibold text-gray-900">Manajemen Peserta</p>
           <p className="text-sm text-gray-500">Verifikasi dan kelola data peserta</p>
+        </Link>
+        <Link href={`/events/${id}/jadwal`} className="rounded-xl border bg-white p-5 hover:shadow-md transition-shadow">
+          <div className="text-2xl">📅</div>
+          <p className="mt-2 font-semibold text-gray-900">Jadwal & Export</p>
+          <p className="text-sm text-gray-500">Atur jadwal & download PDF</p>
         </Link>
         <Link href={`/events/${id}/bagan`} className="rounded-xl border bg-white p-5 hover:shadow-md transition-shadow">
           <div className="text-2xl">🏆</div>
