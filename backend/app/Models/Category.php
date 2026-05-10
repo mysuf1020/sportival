@@ -11,8 +11,8 @@ class Category extends Model
 {
     protected $fillable = [
         'event_id', 'name', 'slug', 'gender', 'age_min', 'age_max',
-        'weight_min', 'weight_max', 'competition_type', 'sport_discipline',
-        'max_participants', 'is_active',
+        'weight_min', 'weight_max', 'competition_type', 'scoring_type',
+        'sport_discipline', 'max_participants', 'is_active',
     ];
 
     protected function casts(): array

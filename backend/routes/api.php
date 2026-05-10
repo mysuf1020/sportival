@@ -90,6 +90,8 @@ Route::prefix('v1')->group(function () {
         Route::middleware('role:super_admin,admin,sekretariat,bendahara')->group(function () {
             Route::get('/events/{eventId}/export/participants', [ExportController::class, 'exportParticipants']);
             Route::get('/events/{eventId}/export/medals', [ExportController::class, 'exportMedals']);
+            Route::get('/events/{eventId}/export/certificates/winners', [ExportController::class, 'exportWinnerCertificates']);
+            Route::get('/events/{eventId}/export/certificates/participants', [ExportController::class, 'exportParticipantCertificates']);
         });
     });
 });

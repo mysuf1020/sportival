@@ -127,7 +127,22 @@ export default function PenjurianPage({ params }: { params: Promise<{ id: string
                 )}
               </div>
 
-              <div className="mt-5 grid grid-cols-2 gap-4">
+              {(() => {
+                const activeCat = categories.find((c) => c.id === selectedCategory)
+                const scoringType = activeCat?.scoring_type ?? 'points'
+                const SCORING_HINT: Record<string, string> = {
+                  points:     'Sistem Penilaian: Poin (0–100, lebih besar menang)',
+                  time_asc:   'Sistem Penilaian: Waktu (input dalam detik, lebih kecil menang)',
+                  rounds_won: 'Sistem Penilaian: Ronde Dimenangkan',
+                }
+                return (
+                  <div className="mb-4 rounded-lg bg-indigo-50 px-3 py-2 text-xs text-indigo-700">
+                    {SCORING_HINT[scoringType]}
+                  </div>
+                )
+              })()}
+
+              <div className="grid grid-cols-2 gap-4">
                 {[
                   { reg: selectedMatch.athlete1, regId: selectedMatch.registration1_id },
                   { reg: selectedMatch.athlete2, regId: selectedMatch.registration2_id },
@@ -135,6 +150,8 @@ export default function PenjurianPage({ params }: { params: Promise<{ id: string
                   if (!reg || !regId) return null
                   const total = summary?.totals?.[regId]
                   const isWinner = summary?.winner_id === regId
+                  const activeCat = categories.find((c) => c.id === selectedCategory)
+                  const scorePlaceholder = activeCat?.scoring_type === 'time_asc' ? 'Waktu (detik)' : activeCat?.scoring_type === 'rounds_won' ? 'Ronde Menang' : 'Nilai (0-100)'
                   return (
                     <div key={regId} className={`rounded-lg border p-4 ${isWinner ? 'border-green-400 bg-green-50' : ''}`}>
                       <p className="font-semibold text-gray-900">{reg.athlete?.name}</p>
@@ -146,7 +163,7 @@ export default function PenjurianPage({ params }: { params: Promise<{ id: string
                         <input
                           type="number"
                           step="0.1"
-                          placeholder="Nilai (0-100)"
+                          placeholder={scorePlaceholder}
                           value={scores[regId]?.score ?? ''}
                           onChange={(e) => setScores((s) => ({ ...s, [regId]: { ...s[regId], score: e.target.value } }))}
                           className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none"

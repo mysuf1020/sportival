@@ -52,7 +52,7 @@ export const updateEvent = (id: number, data: unknown) =>
 
 export const downloadExport = async (
   eventId: number,
-  type: 'participants' | 'medals',
+  type: 'participants' | 'medals' | 'certificates/winners' | 'certificates/participants',
   filename: string,
 ): Promise<void> => {
   const response = await httpClient.get(`/admin/events/${eventId}/export/${type}`, { responseType: 'blob' })
