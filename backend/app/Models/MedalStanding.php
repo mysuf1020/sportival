@@ -9,8 +9,9 @@ class MedalStanding extends Model
 {
     public $timestamps = false;
 
+    // total_medals is a DB-generated column (storedAs), never mass-assigned
     protected $fillable = [
-        'event_id', 'contingent_id', 'gold', 'silver', 'bronze', 'rank', 'updated_at',
+        'event_id', 'contingent_id', 'gold', 'silver', 'bronze', 'rank',
     ];
 
     protected function casts(): array

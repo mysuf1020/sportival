@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Match extends Model
+class TournamentMatch extends Model
 {
     protected $table = 'matches';
 
@@ -52,6 +52,6 @@ class Match extends Model
 
     public function scores(): HasMany
     {
-        return $this->hasMany(MatchScore::class);
+        return $this->hasMany(MatchScore::class, 'match_id');
     }
 }

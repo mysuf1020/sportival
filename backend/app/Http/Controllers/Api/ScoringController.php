@@ -3,9 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Match;
-use App\Models\MatchScore;
 use App\Models\MedalStanding;
+use App\Models\MatchScore;
+use App\Models\Registration;
+use App\Models\TournamentMatch;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -14,8 +15,11 @@ class ScoringController extends Controller
 {
     public function getMatchScores(int $matchId): JsonResponse
     {
-        $match = Match::with(['scores.judge', 'athlete1.athlete.contingent', 'athlete2.athlete.contingent'])
-            ->findOrFail($matchId);
+        $match = TournamentMatch::with([
+            'scores.judge',
+            'athlete1.athlete.contingent',
+            'athlete2.athlete.contingent',
+        ])->findOrFail($matchId);
 
         $summary = $this->calculateScoreSummary($match);
 
@@ -24,7 +28,7 @@ class ScoringController extends Controller
 
     public function submitScore(Request $request, int $matchId): JsonResponse
     {
-        $match = Match::findOrFail($matchId);
+        $match = TournamentMatch::findOrFail($matchId);
         $judge = $request->user();
 
         if (!$judge->isJuri()) {
@@ -53,19 +57,26 @@ class ScoringController extends Controller
             ]
         );
 
-        $summary = $this->calculateScoreSummary($match->fresh());
-        broadcast(new \App\Events\ScoreUpdated($matchId, $summary));
+        $match->load('scores');
+        $summary = $this->calculateScoreSummary($match);
+
+        try {
+            broadcast(new \App\Events\ScoreUpdated($matchId, $summary));
+        } catch (\Exception) {}
 
         return response()->json(['success' => true, 'message' => 'Nilai berhasil disimpan', 'data' => $score]);
     }
 
     public function finishMatch(Request $request, int $matchId): JsonResponse
     {
-        $match = Match::with('scores')->findOrFail($matchId);
+        $match = TournamentMatch::with(['scores', 'bracket', 'category'])->findOrFail($matchId);
         $summary = $this->calculateScoreSummary($match);
 
         if (!$summary['winner_id']) {
-            return response()->json(['success' => false, 'message' => 'Pemenang belum bisa ditentukan (skor sama)'], 422);
+            return response()->json([
+                'success' => false,
+                'message' => 'Pemenang belum bisa ditentukan. Skor masih sama atau belum ada nilai.',
+            ], 422);
         }
 
         DB::transaction(function () use ($match, $summary) {
@@ -75,22 +86,26 @@ class ScoringController extends Controller
                 'finished_at' => now(),
             ]);
 
-            $this->updateMedalStandings($match, $summary['loser_id']);
+            $this->updateMedalStandings($match, (int) $summary['loser_id']);
         });
 
-        broadcast(new \App\Events\MatchUpdated($match->fresh()->load('winner.athlete.contingent')));
+        try {
+            broadcast(new \App\Events\MatchUpdated($match->fresh()->load('winner.athlete.contingent')));
+        } catch (\Exception) {}
 
         return response()->json(['success' => true, 'message' => 'Match selesai', 'data' => $match->fresh()]);
     }
 
-    private function calculateScoreSummary(Match $match): array
+    private function calculateScoreSummary(TournamentMatch $match): array
     {
-        $scores = $match->scores()->get()->groupBy('registration_id');
-        $totals = [];
+        // Use loaded relation if available, otherwise query
+        $scores = $match->relationLoaded('scores')
+            ? $match->scores
+            : $match->scores()->get();
 
-        foreach ($scores as $regId => $regScores) {
-            $totalScore = $regScores->sum('score') - ($regScores->sum('penalties') * 2);
-            $totals[$regId] = $totalScore;
+        $totals = [];
+        foreach ($scores->groupBy('registration_id') as $regId => $regScores) {
+            $totals[$regId] = $regScores->sum('score') - ($regScores->sum('penalties') * 2);
         }
 
         $winner = null;
@@ -112,41 +127,43 @@ class ScoringController extends Controller
         ];
     }
 
-    private function updateMedalStandings(Match $match, ?int $loserId): void
+    private function updateMedalStandings(TournamentMatch $match, int $loserId): void
     {
-        if (!$loserId) return;
-
-        $loserReg = \App\Models\Registration::with('athlete.contingent')->find($loserId);
+        $loserReg = Registration::with('athlete')->find($loserId);
         if (!$loserReg) return;
 
+        // Lazy load relations if not already loaded
+        if (!$match->relationLoaded('bracket')) $match->load('bracket');
+        if (!$match->relationLoaded('category')) $match->load('category');
+
         $eventId = $match->category->event_id;
-        $contingentId = $loserReg->athlete->contingent_id;
+        $maxRound = $match->bracket->matches()->max('round');
 
-        // Determine medal: final match = gold/silver, semi = bronze
-        $bracket = $match->bracket;
-        $maxRound = $bracket->matches()->max('round');
-
-        $medal = match(true) {
+        $loserMedal = match(true) {
             $match->round === $maxRound => 'silver',
             $match->round === $maxRound - 1 => 'bronze',
             default => null,
         };
 
-        if ($medal) {
-            MedalStanding::updateOrCreate(
-                ['event_id' => $eventId, 'contingent_id' => $contingentId],
-                [$medal => DB::raw($medal . ' + 1'), 'updated_at' => now()]
+        if ($loserMedal) {
+            $loserStanding = MedalStanding::firstOrCreate(
+                ['event_id' => $eventId, 'contingent_id' => $loserReg->athlete->contingent_id],
+                ['gold' => 0, 'silver' => 0, 'bronze' => 0]
             );
+            $loserStanding->increment($loserMedal);
+            MedalStanding::where('id', $loserStanding->id)->update(['updated_at' => now()]);
         }
 
-        // Winner's gold handled when final is finished
-        if ($match->round === $maxRound) {
-            $winnerReg = \App\Models\Registration::with('athlete.contingent')->find($match->winner_registration_id);
+        // Gold for winner (only on final)
+        if ($match->round === $maxRound && $match->winner_registration_id) {
+            $winnerReg = Registration::with('athlete')->find($match->winner_registration_id);
             if ($winnerReg) {
-                MedalStanding::updateOrCreate(
+                $winnerStanding = MedalStanding::firstOrCreate(
                     ['event_id' => $eventId, 'contingent_id' => $winnerReg->athlete->contingent_id],
-                    ['gold' => DB::raw('gold + 1'), 'updated_at' => now()]
+                    ['gold' => 0, 'silver' => 0, 'bronze' => 0]
                 );
+                $winnerStanding->increment('gold');
+                MedalStanding::where('id', $winnerStanding->id)->update(['updated_at' => now()]);
             }
         }
 
@@ -162,7 +179,7 @@ class ScoringController extends Controller
             ->get();
 
         foreach ($standings as $rank => $standing) {
-            $standing->update(['rank' => $rank + 1]);
+            MedalStanding::where('id', $standing->id)->update(['rank' => $rank + 1]);
         }
     }
 }

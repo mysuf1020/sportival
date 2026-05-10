@@ -15,7 +15,7 @@ class UserService
     public function createUser(array $data): User
     {
         $data['password'] = Hash::make($data['password']);
-        $data['role'] = $data['role'] ?? 'user';
+        $data['role'] ??= 'sekretariat';
 
         return $this->userRepository->create($data);
     }
@@ -42,6 +42,12 @@ class UserService
 
     public function updateUser(int $id, array $data): User
     {
+        if (!empty($data['password'])) {
+            $data['password'] = Hash::make($data['password']);
+        } else {
+            unset($data['password']);
+        }
+
         return $this->userRepository->update($id, $data);
     }
 

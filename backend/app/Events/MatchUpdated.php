@@ -2,7 +2,7 @@
 
 namespace App\Events;
 
-use App\Models\Match;
+use App\Models\TournamentMatch;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -13,7 +13,7 @@ class MatchUpdated implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public function __construct(public Match $match) {}
+    public function __construct(public TournamentMatch $match) {}
 
     public function broadcastOn(): array
     {
