@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
+use App\Http\Middleware\CheckRole;
 use App\Repositories\UserRepository;
 use App\Services\UserService;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -23,6 +25,6 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        //
+        Route::aliasMiddleware('role', CheckRole::class);
     }
 }

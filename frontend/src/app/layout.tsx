@@ -6,8 +6,8 @@ import Providers from './providers'
 const inter = Inter({ variable: '--font-inter', subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Boilerplate App',
-  description: 'Full JS Boilerplate application',
+  title: 'Sportival - Platform Manajemen Turnamen',
+  description: 'Platform turnamen olahraga multi-event dengan sistem penjurian dan bagan pertandingan',
 }
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
